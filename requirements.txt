@@ -1,9 +1,6 @@
 streamlit
 onnxruntime
-onnx
 opencv-python
 numpy
 Pillow
 pyttsx3
-gTTS
-playsound==1.2.2
