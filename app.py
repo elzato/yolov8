@@ -1,52 +1,42 @@
-import streamlit as st
-import cv2
-import numpy as np
+from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import JSONResponse
 import onnxruntime
+import numpy as np
 from PIL import Image
-import tempfile
-import pyttsx3  # atau from gtts import gTTS
+import io
 
-# Load model
+app = FastAPI()
+
+# Load the YOLOv8 model (pastikan jalur model benar)
 session = onnxruntime.InferenceSession("yolov8.onnx")
-input_name = session.get_inputs()[0].name
 
-# Load TTS engine
-engine = pyttsx3.init()
+def preprocess_image(image: Image):
+    # Resize the image to 640x640 as required by YOLOv8
+    image = image.resize((640, 640))
+    image = np.array(image).astype(np.float32)
+    image = image / 255.0  # Normalize the image
+    image = np.transpose(image, (2, 0, 1))  # Channels first
+    image = np.expand_dims(image, axis=0)  # Add batch dimension
+    return image
 
-# Fungsi deteksi
-def detect_objects(image):
-    img = cv2.resize(image, (640, 640))
-    img = img.astype(np.float32) / 255.0
-    img = np.transpose(img, (2, 0, 1))[np.newaxis, :, :, :]
-    outputs = session.run(None, {input_name: img})[0]
-    return outputs  # Sesuaikan dengan output model
+def detect_objects(image: Image):
+    input_data = preprocess_image(image)
+    inputs = {session.get_inputs()[0].name: input_data}
+    outputs = session.run(None, inputs)
+    return outputs
 
-# Fungsi TTS
-def speak(text):
-    engine.say(text)
-    engine.runAndWait()
+@app.post("/detect")
+async def detect(file: UploadFile = File(...)):
+    # Read the uploaded image file
+    image_data = await file.read()
+    image = Image.open(io.BytesIO(image_data))
+    
+    # Run the object detection
+    detections = detect_objects(image)
 
-# Streamlit UI
-st.title("YOLOv8 Object Detection + TTS")
+    # Return the results as JSON
+    return JSONResponse(content={"detections": detections[0].tolist()})
 
-option = st.radio("Pilih input:", ["Upload Gambar", "Ambil Foto"])
-
-if option == "Upload Gambar":
-    uploaded = st.file_uploader("Upload gambar", type=["jpg", "jpeg", "png"])
-    if uploaded:
-        image = np.array(Image.open(uploaded).convert("RGB"))
-        st.image(image, caption="Gambar Anda")
-        if st.button("Deteksi"):
-            results = detect_objects(image)
-            st.write("Hasil deteksi:", results)  # Sesuaikan parsing
-            speak("Detected object")
-
-elif option == "Ambil Foto":
-    img_data = st.camera_input("Ambil gambar")
-    if img_data:
-        image = np.array(Image.open(img_data).convert("RGB"))
-        st.image(image, caption="Gambar Anda")
-        if st.button("Deteksi"):
-            results = detect_objects(image)
-            st.write("Hasil deteksi:", results)
-            speak("Detected object")
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
