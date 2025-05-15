@@ -1,5 +1,5 @@
-Flask==2.2.2
-ultralytics==8.0.0  # or the specific version you are using
-opencv-python==4.5.5.64
-numpy==1.21.6
-Pillow==9.0.1
+Flask
+ultralytics
+opencv-python
+numpy
+Pillow
