@@ -1,5 +1,9 @@
-Flask
-ultralytics
-opencv-python
+flask
+ultralytics==8.0.168
+torch==2.1.0+cpu
+torchvision==0.16.0+cpu
 numpy
+opencv-python-headless
 Pillow
+gTTS
+--extra-index-url https://download.pytorch.org/whl/cpu
