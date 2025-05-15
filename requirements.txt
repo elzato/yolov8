@@ -1,8 +1,8 @@
-torch==2.1.0
-torchvision==0.16.0
-flask
+flask==2.2.5
+torch==2.0.1
+torchvision==0.15.2
 ultralytics==8.0.168
-numpy
-opencv-python-headless
-Pillow
-gTTS
+numpy==1.25.2
+opencv-python-headless==4.8.1.78
+Pillow==10.0.0
+gTTS==2.3.0
